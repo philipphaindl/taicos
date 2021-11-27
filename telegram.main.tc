@@ -1,0 +1,175 @@
+projectId: "telegram".
+
+at warning 20% before constraint violation.
+
+@features: {
+   camera: { 
+   		context sonar with {
+   			directory "org.telegram.messenger.camera". 
+   		}
+   }
+   video: { 
+   		context sonar with {
+   			directory "org.telegram.messenger.video". 
+   		}
+   }
+   voip: { 
+   		context sonar with {
+   			directory "org.telegram.messenger.voip". 
+   		}
+   }
+   secretmedia: { 
+   		context sonar with {
+   			directory "org.telegram.messenger.secretmedia". 
+   		}
+   }
+}
+
+@interests: {
+   TestQuality with quality-rating testquality_rating: "Features are well tested".
+   CustomerSatisfaction: "Customers are attracted by the features".
+   DevelopmentQuality: "Development of the features is possible smoothly". {
+      Maintainability with quality-rating maintainability_rating: "Features can be maintained easily".
+      DevelopmentDuration with quality-rating devDuration_rating: "Development steps can be completed quickly".
+   }
+   OperationalQuality: "Operation of the features is possible smoothly". {
+      Efficiency with quality-rating efficiency_rating: "Features encompass little resources and operate responsively".
+      Security: "Features process data in a secure and incompromisable manner".
+      Reliability with quality-rating reliability_rating: "Features provide their functionality reliably".
+   }
+}
+
+@variables: {
+   technicalDebt as measure from Sonar("technicalDebt").
+   testCoverage as measure from Sonar("coverage").
+   complexity as measure from Sonar("complexity").
+   ruleViolations as rule from Sonar("ruleViolations").
+   vulnerabilities as measure from Sonar("vulnerabilities").
+   responseTime as measure from RuntimeMonitor("responseTime").
+   memoryConsumption as measure from RuntimeMonitor("memoryConsumption").
+   numberOfUnitTests as measure from TestMonitor("numberOfUnitTests").
+   testTime as measure from TestMonitor("testExecution").
+   buildTime as measure from BuildMonitor("buildTime").
+   ratings as measure from AppstoreMonitor("rating").
+   userCount as measure from AppstoreMonitor("users").
+   mtbf as measure from OperationsMonitor("mtbf").
+   downTime as measure from OperationsMonitor("downtime").
+   postReleaseDefects as measure from IssuesMonitor("postreleasedefects").
+   developmentVelocity as measure from CommitMonitor("velocity").
+}
+
+@product with quality-gate product_quality_gate: {
+   default quality-gate for features feature_quality_gate.
+}
+
+@quality-gates: {
+   product_quality_gate: {
+      pass: average rating of features is B.
+      warn: average rating of features is C and feature video is rated B.
+   }
+   feature_quality_gate: {
+      pass: average rating of interests is A.
+      warn: average rating of interests is B.
+   }
+}
+
+@quality-ratings: {
+   maintainability_rating: {
+      A: 3 of 3 constraints are fulfilled.   
+      B: 2 of 3 constraints and constraint technicalDebtConstraint are fulfilled.
+      C: 1 of 3 constraints are fulfilled.
+   }
+   efficiency_rating: {
+      A: 2 of 2 constraints are fulfilled.   
+      B: 1 of 2 constraints are fulfilled.   
+   }
+   reliability_rating: {
+      A: 2 of 2 constraints and constraint downTimeConstraint are fulfilled.
+      B: 1 of 2 constraints and constraint downTimeConstraint are fulfilled.
+   }
+   testquality_rating: {
+      A: 3 of 3 constraints are fulfilled.   
+      B: 2 of 3 constraints and constraint unitTestCountConstraint are fulfilled.
+      C: 1 of 3 constraints are fulfilled.
+   }
+   devDuration_rating: {
+      A: 3 of 3 constraints are fulfilled.   
+      B: 2 of 3 constraints are fulfilled.
+      C: 1 of 3 constraints are fulfilled. 
+   }
+}
+
+DevelopmentQuality: {
+   .Maintainability: {
+      camera, secretmedia: avg(ruleViolations, months(6)) < 40.
+      video: avg(ruleViolations, months(6)) < 30.
+      voip: avg(ruleViolations, months(6)) < 20.
+
+      camera, video: avg(technicalDebt, months(6)) < 7 as technicalDebtConstraint.
+      secretmedia: avg(technicalDebt, months(6)) < 10 as technicalDebtConstraint.
+      voip: avg(technicalDebt, months(6)) < 5 as technicalDebtConstraint.
+
+      camera, video: avg(complexity, months(6)) < 10.
+      voip: avg(complexity, months(6)) < 20.
+      secretmedia: avg(complexity, months(6)) < 30.    
+   }
+   .DevelopmentDuration: {
+      camera: avg(developmentVelocity, weeks(52)) > 7. 
+      video: avg(developmentVelocity, weeks(52)) > 10.
+      voip: avg(developmentVelocity, weeks(52)) > 5.
+      secretmedia: avg(developmentVelocity, weeks(52)) > 2.
+
+      camera: avg(buildTime, months(6)) < 80.
+      video: avg(buildTime, months(6)) < 200.
+      voip: avg(buildTime, months(6)) < 120.
+      secretmedia: avg(buildTime, months(6)) < 60.
+
+      camera, video, voip, secretmedia: avg(testTime, months(6)) < 1.
+   }
+}
+
+TestQuality: {
+   camera, video: min(numberOfUnitTests, months(6)) >= 10 as unitTestCountConstraint.
+   voip: min(numberOfUnitTests, months(6)) >= 20 as unitTestCountConstraint.
+   secretmedia: min(numberOfUnitTests, months(6)) >= 15 as unitTestCountConstraint.
+
+   camera: avg(testCoverage, months(6)) >= 5.
+   video: avg(testCoverage, months(6)) >= 10.
+   voip: avg(testCoverage, months(6)) >= 7.
+   secretmedia: avg(testCoverage, months(6)) >= 12.
+
+   camera: max(postReleaseDefects, months(6)) <= 5.
+   video: max(postReleaseDefects, months(6)) <= 3.
+   voip: max(postReleaseDefects, months(6)) <= 4.
+   secretmedia: max(postReleaseDefects, months(6)) <= 2.
+}
+
+OperationalQuality: {
+   .Efficiency: {
+      camera: max(memoryConsumption, months(6)) < 50.
+      video: max(memoryConsumption, months(6)) < 80.
+      voip: max(memoryConsumption, months(6)) < 10.
+      secretmedia: max(memoryConsumption, months(6)) < 5.
+
+      camera: max(responseTime, months(6)) < 70.
+      video: max(responseTime, months(6)) < 40.
+      voip: max(responseTime, months(6)) < 50.
+      secretmedia: max(responseTime, months(6)) < 15.
+   }
+   .Security: {
+      camera, video, voip, secretmedia: max(vulnerabilities, months(6)) == 0.
+   }
+   .Reliability: {
+      camera: avg(downTime, months(6)) <= 0.05 as downTimeConstraint.
+      video: avg(downTime, months(6)) <= 0.02 as downTimeConstraint.
+      voip: avg(downTime, months(6)) <= 0.04 as downTimeConstraint.
+      secretmedia: avg(downTime, months(6)) <= 0.01 as downTimeConstraint.
+
+      camera, video, voip, secretmedia: median(mtbf, months(6)) > 1500.
+   }
+}
+
+CustomerSatisfaction: {
+   camera, video, voip, secretmedia: gradient(userCount, months(6)) > 15%.
+   camera, video, voip, secretmedia: avg(ratings, months(6)) >= 4.
+}
